@@ -20,57 +20,66 @@ MEAL_DATABASE = {
     }
 }
 
+# Shopping list items per diet
 SHOPPING_ITEMS = {
     "vegan": ["Tofu", "Lentils", "Chickpeas", "Vegetables"],
     "vegetarian": ["Eggs", "Cheese", "Yogurt", "Vegetables"],
     "keto": ["Meat", "Eggs", "Avocado", "Low-carb vegetables"]
 }
 
-def generate_meal_plan(diet, days=7):
-    plan = {}
-    for day in range(1, days + 1):
-        plan[f"Day {day}"] = {
+def generate_meal_plan(diet: str, days: int = 7) -> dict:
+    return {
+        f"Day {day}": {
             "Breakfast": random.choice(MEAL_DATABASE[diet]["breakfast"]),
             "Lunch": random.choice(MEAL_DATABASE[diet]["lunch"]),
-            "Dinner": random.choice(MEAL_DATABASE[diet]["dinner"])
+            "Dinner": random.choice(MEAL_DATABASE[diet]["dinner"]),
         }
-    return plan
+        for day in range(1, days + 1)
+    }
 
 # Streamlit UI
-st.title("🍽️ Meal Plan Generator")
+st.set_page_config(page_title="Meal Plan Generator", page_icon="🍽️")
+st.title("🍽️ Personalized Meal Plan Generator")
 
-col1, col2 = st.columns(2)
-with col1:
+with st.sidebar:
+    st.header("Settings")
     diet = st.selectbox(
-        "Dietary Preference:",
+        "Select your dietary preference:",
         ["Vegan", "Vegetarian", "Keto", "Paleo", "Mediterranean", "Omnivore"]
     ).lower()
 
-with col2:
     goal = st.selectbox(
-        "Goal:",
+        "Choose your goal:",
         ["Weight Loss", "Muscle Gain", "Maintenance"]
     )
 
+    days = st.slider("Number of days to plan for:", min_value=1, max_value=14, value=7)
+
 if st.button("Generate Meal Plan"):
-    with st.spinner("Creating your personalized meal plan..."):
-        meal_plan = generate_meal_plan(diet)
-        
-        st.success("Here's your weekly meal plan!")
+    if diet not in MEAL_DATABASE:
+        st.error(f"🚫 Sorry, we don't support the '{diet.capitalize()}' diet yet.")
+    else:
+        with st.spinner("Creating your personalized meal plan..."):
+            meal_plan = generate_meal_plan(diet, days)
+
+        st.success("✅ Your weekly meal plan is ready!")
+
         st.subheader("📅 Weekly Meal Plan")
-        
         for day, meals in meal_plan.items():
-            with st.expander(f"{day}"):
+            with st.expander(day):
                 for meal_type, meal in meals.items():
                     st.markdown(f"**{meal_type}**: {meal}")
-        
+
         st.subheader("🛒 Shopping List")
-        for item in SHOPPING_ITEMS.get(diet, []):
-            st.markdown(f"- {item}")
-        
-        st.subheader("🍳 Recipe Suggestions")
+        st.markdown("\n".join(f"- {item}" for item in SHOPPING_ITEMS[diet]))
+
+        st.subheader("🍳 Tips for Success")
         st.markdown("""
-        - Adjust portion sizes based on your calorie needs
-        - Drink plenty of water throughout the day
-        - Meal prep on Sundays for easier weekdays
+        - 🥗 Adjust portion sizes to fit your goal  
+        - 💧 Stay hydrated throughout the day  
+        - 🥣 Consider meal prepping to save time during the week  
+        - 🛍️ Check your pantry before shopping  
         """)
+
+st.markdown("---")
+st.caption("Built with ❤️ using Streamlit")
